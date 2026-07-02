@@ -67,58 +67,199 @@ const CtrlBtn = ({ onClick, active, danger, title, children }: any) => (
   </motion.button>
 )
 
-// ── Video Tile ─────────────────────────────────────────────────────────────
-const VideoTile = ({ name, videoRef, isLocal, videoOff, muted, isActive }: any) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.92 }}
-    animate={{ opacity: 1, scale: 1 }}
-    style={{
-      position: 'relative', borderRadius: 16, overflow: 'hidden',
-      background: 'linear-gradient(135deg, #0f0d1a, #0a0814)',
-      border: `1.5px solid ${isActive ? C.accentLight + '60' : C.border}`,
-      boxShadow: isActive ? `0 0 24px ${C.accentGlow}` : 'none',
-      aspectRatio: '16/9', transition: 'all 0.3s',
-    }}
-  >
-    <video
-      ref={videoRef} autoPlay playsInline muted={isLocal}
-      style={{ width: '100%', height: '100%', objectFit: 'cover', display: videoOff ? 'none' : 'block' }}
-    />
-    {videoOff && (
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <motion.div
-          animate={{ scale: isActive ? [1, 1.06, 1] : 1 }}
-          transition={{ duration: 1.5, repeat: isActive ? Infinity : 0 }}
-          style={{
-            width: 56, height: 56, borderRadius: '50%',
-            background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 800, color: '#fff',
-            boxShadow: isActive ? `0 0 24px ${C.accentGlow}` : 'none',
-          }}
-        >{name?.[0]?.toUpperCase()}</motion.div>
-        <span style={{ fontSize: 11, color: C.muted, fontFamily: F }}>Camera off</span>
-      </div>
-    )}
-    {isActive && (
+// ── Premium Video Tile ─────────────────────────────────────────────────────
+const VideoTile = ({ name, videoRef, isLocal, videoOff, muted, isActive, index = 0 }: any) => {
+  const colors = [
+    ['#5E6AD2', '#a855f7'],
+    ['#10b981', '#3b82f6'],
+    ['#f59e0b', '#ef4444'],
+    ['#ec4899', '#8b5cf6'],
+  ]
+  const [c1, c2] = colors[index % colors.length]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.88, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24, delay: index * 0.08 }}
+      style={{
+        position: 'relative',
+        borderRadius: 20,
+        overflow: 'hidden',
+        aspectRatio: '16/9',
+        background: `linear-gradient(135deg, #0a0814 0%, #0d0b18 100%)`,
+      }}
+    >
+      {/* Outer glow ring */}
       <motion.div
-        animate={{ opacity: [0.4, 0.9, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }}
-        style={{ position: 'absolute', inset: 0, borderRadius: 14, border: `2px solid ${C.accentLight}`, pointerEvents: 'none' }}
+        animate={isActive ? {
+          boxShadow: [
+            `0 0 0 1.5px ${c1}40, 0 0 30px ${c1}20`,
+            `0 0 0 1.5px ${c1}80, 0 0 40px ${c1}35`,
+            `0 0 0 1.5px ${c1}40, 0 0 30px ${c1}20`,
+          ]
+        } : { boxShadow: `0 0 0 1px rgba(255,255,255,0.07)` }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', inset: 0, borderRadius: 20,
+          pointerEvents: 'none', zIndex: 10,
+        }}
       />
-    )}
-    <div style={{
-      position: 'absolute', bottom: 10, left: 10,
-      display: 'flex', alignItems: 'center', gap: 5,
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)',
-      borderRadius: 8, padding: '4px 8px',
-    }}>
-      {muted && <MicOff size={10} color={C.red} />}
-      <span style={{ fontSize: 11, color: '#fff', fontFamily: F, fontWeight: 500 }}>
-        {name}{isLocal ? ' (You)' : ''}
-      </span>
-    </div>
-  </motion.div>
-)
+
+      {/* Corner accents */}
+      {isActive && (
+        <>
+          {[
+            { top: 0, left: 0, borderTop: `2px solid ${c1}`, borderLeft: `2px solid ${c1}`, borderTopLeftRadius: 20 },
+            { top: 0, right: 0, borderTop: `2px solid ${c1}`, borderRight: `2px solid ${c1}`, borderTopRightRadius: 20 },
+            { bottom: 0, left: 0, borderBottom: `2px solid ${c1}`, borderLeft: `2px solid ${c1}`, borderBottomLeftRadius: 20 },
+            { bottom: 0, right: 0, borderBottom: `2px solid ${c1}`, borderRight: `2px solid ${c1}`, borderBottomRightRadius: 20 },
+          ].map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05 }}
+              style={{ position: 'absolute', width: 16, height: 16, zIndex: 11, ...s }}
+            />
+          ))}
+        </>
+      )}
+
+      {/* Video */}
+      <video
+        ref={videoRef} autoPlay playsInline muted={isLocal}
+        style={{
+          width: '100%', height: '100%', objectFit: 'cover',
+          display: videoOff ? 'none' : 'block',
+        }}
+      />
+
+      {/* Avatar when camera off */}
+      {(!isLocal || videoOff) && !videoRef && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: `radial-gradient(circle at center, ${c1}15 0%, transparent 70%)`,
+        }}>
+          {/* Animated rings */}
+          {isActive && [1, 2, 3].map(i => (
+            <motion.div
+              key={i}
+              animate={{ scale: [1, 1.5 + i * 0.3, 1], opacity: [0.3, 0, 0.3] }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
+              style={{
+                position: 'absolute',
+                width: 56 + i * 28, height: 56 + i * 28,
+                borderRadius: '50%',
+                border: `1px solid ${c1}50`,
+              }}
+            />
+          ))}
+          <motion.div
+            animate={isActive ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+            transition={{ duration: 1.8, repeat: Infinity }}
+            style={{
+              width: 60, height: 60, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${c1}, ${c2})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22, fontWeight: 800, color: '#fff', zIndex: 2,
+              boxShadow: `0 8px 24px ${c1}50`,
+            }}
+          >{name?.[0]?.toUpperCase()}</motion.div>
+        </div>
+      )}
+
+      {/* Camera off avatar — local user */}
+      {isLocal && videoOff && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: `radial-gradient(circle at center, ${c1}12 0%, transparent 70%)`,
+        }}>
+          {isActive && [1, 2].map(i => (
+            <motion.div
+              key={i}
+              animate={{ scale: [1, 1.4 + i * 0.2], opacity: [0.25, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 }}
+              style={{
+                position: 'absolute',
+                width: 60 + i * 24, height: 60 + i * 24,
+                borderRadius: '50%', border: `1px solid ${c1}40`,
+              }}
+            />
+          ))}
+          <motion.div
+            animate={isActive ? { scale: [1, 1.04, 1] } : {}}
+            transition={{ duration: 1.8, repeat: Infinity }}
+            style={{
+              width: 60, height: 60, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${c1}, ${c2})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22, fontWeight: 800, color: '#fff', zIndex: 2,
+              boxShadow: `0 8px 24px ${c1}50`,
+            }}
+          >{name?.[0]?.toUpperCase()}</motion.div>
+          <div style={{ marginTop: 10, fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: F, zIndex: 2 }}>
+            Camera off
+          </div>
+        </div>
+      )}
+
+      {/* Bottom gradient overlay */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Name + Status bar */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        padding: '10px 12px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        zIndex: 5,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          {/* Speaking indicator */}
+          {isActive && !muted && (
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 14 }}>
+              {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ scaleY: [h, 1, h * 0.4, h] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }}
+                  style={{ width: 2.5, height: 14, borderRadius: 2, background: c1, transformOrigin: 'bottom' }}
+                />
+              ))}
+            </div>
+          )}
+          <span style={{ fontSize: 11, color: '#fff', fontFamily: F, fontWeight: 600, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+            {name}{isLocal ? ' (You)' : ''}
+          </span>
+          {isLocal && (
+            <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: `${c1}30`, border: `1px solid ${c1}50`, color: c1, fontFamily: F, fontWeight: 700 }}>HOST</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {muted && (
+            <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <MicOff size={10} color="#ef4444" />
+            </div>
+          )}
+          {videoOff && (
+            <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <VideoOff size={10} color="#ef4444" />
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 
 export default function Meeting() {
   const { roomId } = useParams()
@@ -206,7 +347,7 @@ export default function Meeting() {
     return peer
   }, [])
 
-  // ── Socket Setup ─────────────────────────────────────────────────────────
+// ── Socket Setup ─────────────────────────────────────────────────────────
   useEffect(() => {
     let localStream: MediaStream | null = null
 
@@ -219,14 +360,12 @@ export default function Meeting() {
 
       socket.emit('join-room', roomId)
 
-      // Naya user join hua — offer bhejo
       socket.on('user-joined', ({ socketId }: { socketId: string }) => {
         if (localStream) {
           createPeer(socketId, localStream, true)
         }
       })
 
-      // Offer mila — answer bhejo
       socket.on('webrtc-offer', async ({ offer, from }: any) => {
         if (!localStream) return
         const peer = createPeer(from, localStream, false)
@@ -236,13 +375,11 @@ export default function Meeting() {
         socket.emit('webrtc-answer', { answer, to: from })
       })
 
-      // Answer mila
       socket.on('webrtc-answer', async ({ answer, from }: any) => {
         const peer = peersRef.current[from]
         if (peer) await peer.setRemoteDescription(new RTCSessionDescription(answer))
       })
 
-      // ICE candidate mila
       socket.on('ice-candidate', async ({ candidate, from }: any) => {
         const peer = peersRef.current[from]
         if (peer && candidate) {
@@ -252,7 +389,6 @@ export default function Meeting() {
         }
       })
 
-      // User left
       socket.on('user-left', ({ socketId }: { socketId: string }) => {
         if (peersRef.current[socketId]) {
           peersRef.current[socketId].close()
@@ -265,22 +401,25 @@ export default function Meeting() {
         })
       })
 
-      // Chat messages
+      // Chat — sirf dusron ke messages
       socket.on('receive-message', (data: any) => {
-        setMessages(p => [...p, data])
+        if (data.from !== user.name) {
+          setMessages(p => [...p, data])
+        }
       })
     }
 
     init()
 
     return () => {
-      // Cleanup
       localStreamRef.current?.getTracks().forEach(t => t.stop())
       Object.values(peersRef.current).forEach(p => p.close())
       socketRef.current?.emit('leave-room', roomId)
       socketRef.current?.disconnect()
     }
   }, [])
+
+
 
   // Auto scroll chat
   useEffect(() => {
@@ -414,66 +553,99 @@ export default function Meeting() {
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
-        {/* Video Grid */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 14, gap: 12 }}>
-          <div style={{ flex: 1, display: 'grid', gap: 10, gridTemplateColumns: gridCols, gridTemplateRows: totalParticipants <= 2 ? '1fr' : 'repeat(2, 1fr)' }}>
+       {/* Video Grid */}
+<div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 14, gap: 12 }}>
 
-            {/* Local Video */}
-            <VideoTile
-              name={user.name} videoRef={localVideoRef}
-              isLocal videoOff={videoOff} muted={muted} isActive={!muted}
-            />
+  {/* Main Grid */}
+  <div style={{
+    flex: 1,
+    display: 'grid',
+    gap: 10,
+    gridTemplateColumns: totalParticipants === 1
+      ? '1fr'
+      : totalParticipants === 2
+        ? '1fr 1fr'
+        : totalParticipants <= 4
+          ? 'repeat(2, 1fr)'
+          : 'repeat(3, 1fr)',
+    gridTemplateRows: totalParticipants <= 2
+      ? '1fr'
+      : 'repeat(2, 1fr)',
+  }}>
+    {/* Local */}
+    <VideoTile
+      name={user.name}
+      videoRef={localVideoRef}
+      isLocal
+      videoOff={videoOff}
+      muted={muted}
+      isActive={!muted}
+      index={0}
+    />
 
-            {/* Remote Videos */}
-            {remoteList.map(([socketId, { stream, name }]) => {
-              const remoteVideoRef = (el: HTMLVideoElement | null) => {
-                if (el && stream) el.srcObject = stream
-              }
-              return (
-                <VideoTile
-                  key={socketId}
-                  name={name}
-                  videoRef={remoteVideoRef}
-                  isLocal={false}
-                  videoOff={false}
-                  muted={false}
-                  isActive={true}
-                />
-              )
-            })}
-          </div>
+    {/* Remote */}
+    {remoteList.map(([socketId, { stream, name }], i) => {
+      const ref = (el: HTMLVideoElement | null) => {
+        if (el && stream) el.srcObject = stream
+      }
+      return (
+        <VideoTile
+          key={socketId}
+          name={name}
+          videoRef={ref}
+          isLocal={false}
+          videoOff={false}
+          muted={false}
+          isActive={true}
+          index={i + 1}
+        />
+      )
+    })}
+  </div>
 
-          {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '10px 20px', background: 'rgba(6,6,10,0.85)', backdropFilter: 'blur(20px)', borderRadius: 18, border: `1px solid ${C.border}`, alignSelf: 'center' }}>
-            <CtrlBtn onClick={toggleMute} active={muted} danger title={muted ? 'Unmute' : 'Mute'}>
-              {muted ? <MicOff size={18} color={C.red} /> : <Mic size={18} color={C.muted} />}
-            </CtrlBtn>
-            <CtrlBtn onClick={toggleVideo} active={videoOff} danger title={videoOff ? 'Start Cam' : 'Stop Cam'}>
-              {videoOff ? <VideoOff size={18} color={C.red} /> : <Video size={18} color={C.muted} />}
-            </CtrlBtn>
-            <CtrlBtn onClick={toggleShare} active={sharing} title={sharing ? 'Stop Share' : 'Share Screen'}>
-              {sharing ? <MonitorOff size={18} color={C.accentLight} /> : <Monitor size={18} color={C.muted} />}
-            </CtrlBtn>
-            <div style={{ width: 1, height: 28, background: C.border, margin: '0 6px' }} />
-            <CtrlBtn onClick={() => setTab('chat')} active={tab === 'chat'} title="Chat">
-              <MessageSquare size={18} color={tab === 'chat' ? C.accentLight : C.muted} />
-            </CtrlBtn>
-            <CtrlBtn onClick={() => setTab('people')} active={tab === 'people'} title="People">
-              <Users size={18} color={tab === 'people' ? C.accentLight : C.muted} />
-            </CtrlBtn>
-            <CtrlBtn onClick={generateAI} active={tab === 'ai'} title="AI">
-              <Sparkles size={18} color={tab === 'ai' ? C.accentLight : C.muted} />
-            </CtrlBtn>
-            <div style={{ width: 1, height: 28, background: C.border, margin: '0 6px' }} />
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowEndModal(true)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <PhoneOff size={18} color={C.red} />
-              </div>
-              <span style={{ fontSize: 9, color: C.red, fontFamily: F, fontWeight: 600 }}>End</span>
-            </motion.button>
-          </div>
-        </div>
+  {/* Controls */}
+  <div style={{
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: 4, padding: '10px 20px',
+    background: 'rgba(6,6,10,0.85)',
+    backdropFilter: 'blur(24px)',
+    borderRadius: 18,
+    border: `1px solid rgba(255,255,255,0.07)`,
+    alignSelf: 'center',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+  }}>
+    <CtrlBtn onClick={toggleMute} active={muted} danger title={muted ? 'Unmute' : 'Mute'}>
+      {muted ? <MicOff size={18} color="#ef4444" /> : <Mic size={18} color={C.muted} />}
+    </CtrlBtn>
+    <CtrlBtn onClick={toggleVideo} active={videoOff} danger title={videoOff ? 'Start Cam' : 'Stop Cam'}>
+      {videoOff ? <VideoOff size={18} color="#ef4444" /> : <Video size={18} color={C.muted} />}
+    </CtrlBtn>
+    <CtrlBtn onClick={toggleShare} active={sharing} title={sharing ? 'Stop Share' : 'Share Screen'}>
+      {sharing ? <MonitorOff size={18} color={C.accentLight} /> : <Monitor size={18} color={C.muted} />}
+    </CtrlBtn>
+    <div style={{ width: 1, height: 28, background: C.border, margin: '0 6px' }} />
+    <CtrlBtn onClick={() => setTab('chat')} active={tab === 'chat'} title="Chat">
+      <MessageSquare size={18} color={tab === 'chat' ? C.accentLight : C.muted} />
+    </CtrlBtn>
+    <CtrlBtn onClick={() => setTab('people')} active={tab === 'people'} title="People">
+      <Users size={18} color={tab === 'people' ? C.accentLight : C.muted} />
+    </CtrlBtn>
+    <CtrlBtn onClick={() => { generateAI(); setTab('ai') }} active={tab === 'ai'} title="AI">
+      <Sparkles size={18} color={tab === 'ai' ? C.accentLight : C.muted} />
+    </CtrlBtn>
+    <div style={{ width: 1, height: 28, background: C.border, margin: '0 6px' }} />
+    <motion.button
+      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+      onClick={() => setShowEndModal(true)}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
+    >
+      <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
+        <PhoneOff size={18} color="#ef4444" />
+      </div>
+      <span style={{ fontSize: 9, color: '#ef4444', fontFamily: F, fontWeight: 600 }}>End</span>
+    </motion.button>
+  </div>
+</div>
 
         {/* Sidebar */}
         <div style={{ width: 300, background: 'rgba(6,6,10,0.88)', backdropFilter: 'blur(24px)', borderLeft: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>

@@ -11,6 +11,10 @@ import {
   Mic, MicOff, Camera, CameraOff, Shield, Globe,
   Star, Activity, Target, Award, Hash
 } from 'lucide-react';
+
+import { Edit, Save, Check } from 'lucide-react';
+
+
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell
@@ -957,35 +961,190 @@ const TeamPage = ({ user }: any) => (
 )
 
 // ── Profile Page ──────────────────────────────────────────────────────────────
-const ProfilePage = ({ user }: any) => (
-  <div style={{ maxWidth: 560, margin: '0 auto', paddingBottom: 40 }}>
-    <div style={{ fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: '-0.5px', marginBottom: 18, fontFamily: C.F }}>Profile</div>
-    <GCard style={{ padding: '24px' }} hover={false}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ width: 54, height: 54, borderRadius: 16, background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff', boxShadow: `0 6px 20px ${C.accentGlow}` }}>
-          {user?.name?.[0]?.toUpperCase()}
-        </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: C.text, fontFamily: C.F }}>{user?.name}</div>
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{user?.email}</div>
-          <div style={{ marginTop: 6 }}><Badge color={C.accent}>{user?.role}</Badge></div>
-        </div>
+const ProfilePage = ({ user, onUpdate }: any) => {
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '' })
+  const [error, setError] = useState('')
+
+  const token = localStorage.getItem('token')
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      const res = await axios.put('http://localhost:5000/api/auth/profile',
+        { name: form.name, email: form.email },
+        { headers }
+      )
+      // LocalStorage update karo
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+      setSaved(true)
+      setEditing(false)
+      onUpdate(res.data.user)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (e: any) {
+      setError(e.response?.data?.message || 'Update failed!')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: 560, margin: '0 auto', paddingBottom: 40 }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: '-0.5px', marginBottom: 18, fontFamily: C.F }}>
+        Profile
       </div>
-      {[
-        { label: 'Full Name', value: user?.name },
-        { label: 'Email Address', value: user?.email },
-        { label: 'Role', value: user?.role },
-        { label: 'Member Since', value: 'June 2026' },
-        { label: 'Plan', value: 'Free Tier' },
-      ].map((f, i, arr) => (
-        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-          <span style={{ fontSize: 11, color: C.muted, fontFamily: C.F }}>{f.label}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.text, fontFamily: C.F }}>{f.value}</span>
+
+      <GCard style={{ padding: '24px' }} hover={false}>
+        {/* Avatar + Name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${C.border}` }}>
+          <div style={{
+            width: 54, height: 54, borderRadius: 16, flexShrink: 0,
+            background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, fontWeight: 800, color: '#fff',
+            boxShadow: `0 6px 20px ${C.accentGlow}`,
+          }}>{form.name?.[0]?.toUpperCase()}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.text, fontFamily: C.F }}>{form.name}</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{form.email}</div>
+            <Badge color={C.accent}>{user?.role}</Badge>
+          </div>
+          {/* Edit / Cancel Button */}
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => { setEditing(p => !p); setError('') }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: editing ? 'rgba(239,68,68,0.1)' : C.accentGlow,
+              border: `1px solid ${editing ? 'rgba(239,68,68,0.2)' : C.borderAccent}`,
+              borderRadius: 8, padding: '6px 14px',
+              color: editing ? C.red : C.accentLight,
+              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: C.F,
+            }}
+          >
+            {editing ? <><X size={11} /> Cancel</> : <><Edit size={11} /> Edit</>}
+          </motion.button>
         </div>
-      ))}
-    </GCard>
-  </div>
-)
+
+        {/* Fields */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Name */}
+          <div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: C.F }}>
+              Full Name
+            </div>
+            {editing ? (
+              <input
+                value={form.name}
+                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${C.accentLight}40`,
+                  borderRadius: 9, padding: '10px 13px',
+                  color: C.text, fontSize: 13, outline: 'none', fontFamily: C.F,
+                }}
+                onFocus={e => e.target.style.borderColor = C.accentLight}
+                onBlur={e => e.target.style.borderColor = C.accentLight + '40'}
+              />
+            ) : (
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: C.F }}>{form.name}</div>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: C.F }}>
+              Email Address
+            </div>
+            {editing ? (
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${C.accentLight}40`,
+                  borderRadius: 9, padding: '10px 13px',
+                  color: C.text, fontSize: 13, outline: 'none', fontFamily: C.F,
+                }}
+                onFocus={e => e.target.style.borderColor = C.accentLight}
+                onBlur={e => e.target.style.borderColor = C.accentLight + '40'}
+              />
+            ) : (
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: C.F }}>{form.email}</div>
+            )}
+          </div>
+
+          {/* Role — readonly */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 11, color: C.muted, fontFamily: C.F }}>Role</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.text, fontFamily: C.F }}>{user?.role}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 11, color: C.muted, fontFamily: C.F }}>Member Since</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.text, fontFamily: C.F }}>June 2026</span>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, fontSize: 12, color: C.red, fontFamily: C.F }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          {/* Success */}
+          <AnimatePresence>
+            {saved && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 9, fontSize: 12, color: C.green, fontFamily: C.F, display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Check size={13} color={C.green} /> Profile updated successfully!
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Save Button */}
+          {editing && (
+            <motion.button
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                background: saving ? C.surface : `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+                border: saving ? `1px solid ${C.border}` : 'none',
+                borderRadius: 10, padding: '11px',
+                color: saving ? C.muted : '#fff',
+                fontSize: 12, fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer', fontFamily: C.F,
+                boxShadow: saving ? 'none' : `0 4px 14px ${C.accentGlow}`,
+              }}
+            >
+              {saving ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                    style={{ width: 13, height: 13, border: `2px solid ${C.muted}`, borderTopColor: C.text, borderRadius: '50%' }}
+                  />
+                  Saving...
+                </>
+              ) : (
+                <><Save size={13} /> Save Changes</>
+              )}
+            </motion.button>
+          )}
+        </div>
+      </GCard>
+    </div>
+  )
+}
 
 // ── Settings Page ─────────────────────────────────────────────────────────────
 const SettingsPage = ({ user, logout }: any) => {
@@ -1077,6 +1236,12 @@ export default function Dashboard() {
   const [joinId, setJoinId] = useState('')
   const [toast, setToast] = useState('')
 
+  const [currentUser, setCurrentUser] = useState(
+  JSON.parse(localStorage.getItem('user') || '{}')
+)
+
+
+
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
   const headers = { Authorization: `Bearer ${token}` }
@@ -1115,6 +1280,8 @@ export default function Dashboard() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     navigate('/login')
+
+
   }
 
   const sidebarW = collapsed ? 68 : 232
@@ -1126,7 +1293,7 @@ export default function Dashboard() {
       case 'ai': return <AISummaryPage meetings={meetings} navigate={navigate} />
       case 'analytics': return <AnalyticsPage meetings={meetings} />
       case 'team': return <TeamPage user={user} />
-      case 'profile': return <ProfilePage user={user} />
+      case 'profile': return <ProfilePage user={currentUser} onUpdate={(u: any) => setCurrentUser(u)} />
       case 'settings': return <SettingsPage user={user} logout={logout} />
       default: return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 12 }}>
@@ -1172,7 +1339,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={active} setActive={setActive} user={user} logout={logout} meetings={meetings} />
+      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={active} setActive={setActive} user={currentUser} logout={logout} meetings={meetings} />
 
       {/* Main */}
       <div style={{ flex: 1, marginLeft: sidebarW, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1, transition: 'margin-left 0.3s cubic-bezier(0.16,1,0.3,1)' }}>
