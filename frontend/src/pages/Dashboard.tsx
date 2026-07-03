@@ -9,8 +9,10 @@ import {
   Settings, Play, Zap, ArrowUpRight, TrendingUp,
   Clock, CheckCircle, Circle, MoreHorizontal, X,
   Mic, MicOff, Camera, CameraOff, Shield, Globe,
-  Star, Activity, Target, Award, Hash
+  Star, Activity, Target, Award, Hash, Send
 } from 'lucide-react';
+
+
 
 import { Edit, Save, Check } from 'lucide-react';
 
@@ -118,6 +120,36 @@ const GCard = ({ children, style, className, onClick, hover = true }: any) => (
     className={className}
   >{children}</motion.div>
 )
+
+
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+const StatCard = ({ label, value, icon: Icon, color, trend, sub }: any) => (
+  <GCard style={{ padding: '18px 20px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+      <div style={{
+        width: 34, height: 34, borderRadius: 9,
+        background: color + '15', border: `1px solid ${color}25`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}><Icon size={15} color={color} /></div>
+      {trend !== undefined && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 3,
+          padding: '3px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+          background: 'rgba(16,185,129,0.12)', color: C.green,
+        }}>
+          <TrendingUp size={9} />{Math.abs(trend)}%
+        </div>
+      )}
+    </div>
+    <div style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: '-1px', fontFamily: C.F }}>
+      <Counter value={value} />
+    </div>
+    <div style={{ fontSize: 11, color: C.muted, marginTop: 3, fontFamily: C.F }}>{label}</div>
+    {sub && <div style={{ fontSize: 10, color, marginTop: 4, fontWeight: 600 }}>{sub}</div>}
+  </GCard>
+)
+
+
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 const NAV = [
@@ -255,125 +287,499 @@ const Sidebar = ({ collapsed, setCollapsed, active, setActive, user, logout, mee
 }
 
 // ── Top Nav ───────────────────────────────────────────────────────────────────
-const TopNav = ({ user, onNew, onJoin }: any) => (
-  <header style={{
-    height: 54, position: 'sticky', top: 0, zIndex: 40,
-    background: 'rgba(6,6,10,0.85)', backdropFilter: 'blur(32px)',
-    borderBottom: `1px solid ${C.border}`,
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '0 20px', gap: 16,
-  }}>
-    {/* Search */}
-    <div style={{ position: 'relative', width: 320 }}>
-      <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: C.muted }} />
-      <input
-        placeholder="Search meetings, summaries..."
+
+
+
+
+
+// ── AI Copilot Modal ──────────────────────────────────────────────────────
+const CopilotModal = ({ show, onClose, meetings }: any) => {
+  const [input, setInput] = useState('')
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: 'Hi! I\'m your AI Copilot. Ask me anything about your meetings, summaries, or action items!' }
+  ])
+  const [loading, setLoading] = useState(false)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const ask = async () => {
+    if (!input.trim()) return
+    const q = input
+    setInput('')
+    setMessages(p => [...p, { role: 'user', text: q }])
+    setLoading(true)
+
+    // Smart AI responses based on real data
+    setTimeout(() => {
+      const total = meetings.length
+      const summaries = meetings.filter((m: any) => m.aiSummary).length
+      const actions = meetings.reduce((a: number, m: any) => a + (m.actionItems?.length || 0), 0)
+      const recent = meetings[0]?.title || 'None'
+
+      let response = ''
+      const ql = q.toLowerCase()
+
+      if (ql.includes('meeting') && ql.includes('how many') || ql.includes('total meeting')) {
+        response = `You have ${total} total meeting${total !== 1 ? 's' : ''} on IntellMeet. ${summaries} of them have AI summaries generated.`
+      } else if (ql.includes('summary') || ql.includes('summaries')) {
+        response = `You have ${summaries} AI-generated summar${summaries !== 1 ? 'ies' : 'y'} out of ${total} meetings. ${summaries > 0 ? `Your most recent summary is from "${recent}".` : 'End a meeting to generate your first summary!'}`
+      } else if (ql.includes('action') || ql.includes('task')) {
+        response = `You have ${actions} action item${actions !== 1 ? 's' : ''} tracked across all your meetings. ${actions > 0 ? 'Check the AI Summaries section to view and manage them.' : 'Action items are automatically extracted when you generate an AI summary.'}`
+      } else if (ql.includes('recent') || ql.includes('last meeting')) {
+        response = total > 0 ? `Your most recent meeting was "${recent}". ${meetings[0]?.aiSummary ? 'It has an AI summary available.' : 'No AI summary generated yet for this meeting.'}` : 'You have no meetings yet. Click "New Meeting" to start!'
+      } else if (ql.includes('hello') || ql.includes('hi') || ql.includes('hey')) {
+        response = `Hello! I can help you with your meeting data. You currently have ${total} meetings and ${summaries} AI summaries. What would you like to know?`
+      } else if (ql.includes('help')) {
+        response = 'I can help you with:\n• Meeting statistics\n• AI summary information\n• Action item tracking\n• Recent meeting details\n\nJust ask me anything!'
+      } else {
+        response = `Based on your data: ${total} meetings, ${summaries} AI summaries, ${actions} action items. I'm here to help you get insights from your meetings!`
+      }
+
+      setMessages(p => [...p, { role: 'ai', text: response }])
+      setLoading(false)
+    }, 1200)
+  }
+
+  if (!show) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
         style={{
-          width: '100%', background: C.surface, border: `1px solid ${C.border}`,
-          borderRadius: 10, padding: '7px 32px 7px 32px',
-          color: C.text, fontSize: 12, outline: 'none', fontFamily: C.F,
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)', zIndex: 200,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+          padding: '70px 20px 20px',
         }}
-        className="focus:border-[rgba(94,106,210,0.4)] transition-colors placeholder:text-white/25"
-      />
-      <kbd style={{
-        position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-        background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.border}`,
-        borderRadius: 5, padding: '1px 5px', fontSize: 9, color: C.muted,
-        display: 'flex', alignItems: 'center', gap: 2,
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            width: 380, height: 500,
+            background: '#0d0b14',
+            border: `1px solid ${C.border}`,
+            borderRadius: 20, overflow: 'hidden',
+            boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
+            display: 'flex', flexDirection: 'column',
+            fontFamily: C.F,
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            padding: '14px 16px',
+            background: `linear-gradient(135deg, rgba(94,106,210,0.15), rgba(168,85,247,0.15))`,
+            borderBottom: `1px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Sparkles size={13} color="#fff" />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>AI Copilot</div>
+                <div style={{ fontSize: 9, color: C.muted }}>Powered by IntellMeet AI</div>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+              onClick={onClose}
+              style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer' }}
+            ><X size={14} /></motion.button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {messages.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}
+              >
+                {m.role === 'ai' && (
+                  <div style={{ width: 24, height: 24, borderRadius: 7, background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Sparkles size={11} color="#fff" />
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: '80%', padding: '8px 11px', borderRadius: m.role === 'user' ? '11px 2px 11px 11px' : '2px 11px 11px 11px',
+                  background: m.role === 'user' ? `linear-gradient(135deg, ${C.accent}, ${C.purple})` : 'rgba(255,255,255,0.05)',
+                  border: m.role === 'user' ? 'none' : `1px solid ${C.border}`,
+                  fontSize: 12, color: C.text, lineHeight: 1.5,
+                  whiteSpace: 'pre-line',
+                }}>{m.text}</div>
+              </motion.div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <div style={{ width: 24, height: 24, borderRadius: 7, background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Sparkles size={11} color="#fff" />
+                </div>
+                <div style={{ padding: '10px 14px', borderRadius: '2px 11px 11px 11px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.border}` }}>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {[0, 1, 2].map(i => (
+                      <motion.div key={i}
+                        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
+                        style={{ width: 5, height: 5, borderRadius: '50%', background: C.accentLight }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 7 }}>
+            <input
+              placeholder="Ask about your meetings..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && ask()}
+              autoFocus
+              style={{
+                flex: 1, background: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${C.border}`, borderRadius: 9,
+                padding: '8px 11px', color: C.text, fontSize: 12,
+                outline: 'none', fontFamily: C.F,
+              }}
+            />
+            <motion.button
+              whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+              onClick={ask}
+              style={{
+                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Send size={12} color="#fff" />
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+// ── Notifications Modal ───────────────────────────────────────────────────
+const NotificationsModal = ({ show, onClose, meetings }: any) => {
+  if (!show) return null
+
+  const notifications = [
+    ...meetings.slice(0, 3).map((m: any, i: number) => ({
+      id: i,
+      type: m.status === 'live' ? 'live' : m.aiSummary ? 'summary' : 'meeting',
+      title: m.status === 'live' ? `"${m.title}" is Live!` : m.aiSummary ? `AI Summary ready` : `Meeting created`,
+      sub: m.status === 'live' ? 'Click to join now' : m.aiSummary ? `"${m.title}"` : `"${m.title}"`,
+      time: new Date(m.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      color: m.status === 'live' ? C.red : m.aiSummary ? C.purple : C.accentLight,
+      icon: m.status === 'live' ? '🔴' : m.aiSummary ? '🤖' : '📅',
+    })),
+    {
+      id: 99, type: 'system',
+      title: 'Welcome to IntellMeet!',
+      sub: 'AI-powered meetings are ready',
+      time: 'Today', color: C.green, icon: '✨',
+    }
+  ]
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, zIndex: 200 }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: -10 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute', top: 58, right: 20,
+            width: 320,
+            background: '#0d0b14',
+            border: `1px solid ${C.border}`,
+            borderRadius: 16, overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            fontFamily: C.F,
+          }}
+        >
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>Notifications</div>
+            <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: C.accentGlow, color: C.accentLight, fontWeight: 700 }}>
+              {notifications.length} new
+            </span>
+          </div>
+          <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+            {notifications.map((n, i) => (
+              <motion.div
+                key={n.id}
+                initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                whileHover={{ background: 'rgba(255,255,255,0.04)' }}
+                style={{
+                  padding: '11px 14px', cursor: 'pointer',
+                  borderBottom: i < notifications.length - 1 ? `1px solid ${C.border}` : 'none',
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  transition: 'background 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                  background: n.color + '15', border: `1px solid ${n.color}25`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                }}>{n.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.text, marginBottom: 2 }}>{n.title}</div>
+                  <div style={{ fontSize: 10, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.sub}</div>
+                </div>
+                <div style={{ fontSize: 9, color: C.muted, whiteSpace: 'nowrap', marginTop: 1 }}>{n.time}</div>
+              </motion.div>
+            ))}
+          </div>
+          {notifications.length === 0 && (
+            <div style={{ padding: '30px 20px', textAlign: 'center', color: C.muted, fontSize: 12 }}>
+              No notifications yet
+            </div>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+// ── Profile Menu ──────────────────────────────────────────────────────────
+const ProfileMenu = ({ show, onClose, user, logout, setActive }: any) => {
+  if (!show) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, zIndex: 200 }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute', top: 58, right: 20,
+            width: 240,
+            background: '#0d0b14',
+            border: `1px solid ${C.border}`,
+            borderRadius: 14, overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            fontFamily: C.F,
+          }}
+        >
+          {/* User Info */}
+          <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0,
+              boxShadow: `0 4px 12px ${C.accentGlow}`,
+            }}>{user?.name?.[0]?.toUpperCase()}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</div>
+              <div style={{ fontSize: 10, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+            </div>
+          </div>
+
+          {/* Menu Items */}
+          {[
+            { label: 'View Profile', icon: Shield, action: () => { setActive('profile'); onClose() } },
+            { label: 'Settings', icon: Settings, action: () => { setActive('settings'); onClose() } },
+            { label: 'AI Summaries', icon: Sparkles, action: () => { setActive('ai'); onClose() } },
+            { label: 'Analytics', icon: BarChart2, action: () => { setActive('analytics'); onClose() } },
+          ].map((item, i) => (
+            <motion.button
+              key={i}
+              whileHover={{ background: 'rgba(255,255,255,0.05)' }}
+              onClick={item.action}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: '10px 16px', width: '100%',
+                background: 'none', border: 'none',
+                color: C.sub, fontSize: 12, cursor: 'pointer',
+                fontFamily: C.F, textAlign: 'left',
+                borderBottom: `1px solid ${C.border}`,
+                transition: 'background 0.15s',
+              }}
+            >
+              <item.icon size={13} color={C.muted} />
+              {item.label}
+            </motion.button>
+          ))}
+
+          {/* Logout */}
+          <motion.button
+            whileHover={{ background: 'rgba(239,68,68,0.08)' }}
+            onClick={() => { logout(); onClose() }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 9,
+              padding: '10px 16px', width: '100%',
+              background: 'none', border: 'none',
+              color: C.red, fontSize: 12, cursor: 'pointer',
+              fontFamily: C.F, textAlign: 'left',
+              transition: 'background 0.15s',
+            }}
+          >
+            <LogOut size={13} color={C.red} />
+            Sign Out
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+
+
+
+
+const TopNav = ({ user, onNew, meetings, logout, setActive }: any) => {
+  const [showCopilot, setShowCopilot] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+
+  const liveCount = meetings.filter((m: any) => m.status === 'live').length
+  const notifCount = meetings.length + 1
+
+  return (
+    <>
+      <header style={{
+        height: 52, position: 'sticky', top: 0, zIndex: 40,
+        background: 'rgba(6,6,10,0.88)', backdropFilter: 'blur(32px)',
+        borderBottom: `1px solid ${C.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 20px', gap: 16,
       }}>
-        <Command size={9} /> K
-      </kbd>
-    </div>
-
-    {/* Actions */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {/* AI Copilot */}
-      <motion.button
-        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(94,106,210,0.15))',
-          border: `1px solid rgba(168,85,247,0.25)`,
-          borderRadius: 9, padding: '6px 12px',
-          color: '#c4b5fd', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-          fontFamily: C.F,
-        }}
-      >
-        <Sparkles size={12} /> Ask Copilot
-      </motion.button>
-
-      {/* New Meeting */}
-      <MagneticBtn
-        onClick={onNew}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
-          border: 'none', borderRadius: 9, padding: '6px 14px',
-          color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-          fontFamily: C.F, boxShadow: `0 4px 14px ${C.accentGlow}`,
-        }}
-      >
-        <Plus size={12} /> New Meeting
-      </MagneticBtn>
-
-      {/* Bell */}
-      <motion.button
-        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-        style={{
-          position: 'relative', width: 34, height: 34, borderRadius: 9,
-          background: C.surface, border: `1px solid ${C.border}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: C.muted,
-        }}
-      >
-        <Bell size={14} />
-        <span style={{
-          position: 'absolute', top: 7, right: 7, width: 6, height: 6,
-          background: C.accent, borderRadius: '50%',
-          boxShadow: `0 0 6px ${C.accent}`,
-        }} />
-      </motion.button>
-
-      {/* Avatar */}
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%',
-        background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 12, fontWeight: 800, color: '#fff', cursor: 'pointer',
-        boxShadow: `0 2px 8px ${C.accentGlow}`,
-      }}>{user?.name?.[0]?.toUpperCase()}</div>
-    </div>
-  </header>
-)
-
-// ── Stat Card ─────────────────────────────────────────────────────────────────
-const StatCard = ({ label, value, icon: Icon, color, trend, sub }: any) => (
-  <GCard style={{ padding: '18px 20px' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-      <div style={{
-        width: 34, height: 34, borderRadius: 9,
-        background: color + '15', border: `1px solid ${color}25`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}><Icon size={15} color={color} /></div>
-      {trend !== undefined && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 3,
-          padding: '3px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700,
-          background: trend >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-          color: trend >= 0 ? C.green : C.red,
-        }}>
-          <TrendingUp size={9} />
-          {Math.abs(trend)}%
+        {/* Search */}
+        <div style={{ position: 'relative', width: 300 }}>
+          <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: C.muted }} />
+          <input
+            placeholder="Search meetings, summaries..."
+            style={{
+              width: '100%', background: C.surface, border: `1px solid ${C.border}`,
+              borderRadius: 9, padding: '6px 30px 6px 30px',
+              color: C.text, fontSize: 11, outline: 'none', fontFamily: C.F,
+            }}
+          />
+          <kbd style={{
+            position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)',
+            background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.border}`,
+            borderRadius: 4, padding: '1px 5px', fontSize: 9, color: C.muted,
+            display: 'flex', alignItems: 'center', gap: 2,
+          }}>
+            <Command size={8} /> K
+          </kbd>
         </div>
-      )}
-    </div>
-    <div style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: '-1px', fontFamily: C.F }}>
-      <Counter value={value} />
-    </div>
-    <div style={{ fontSize: 11, color: C.muted, marginTop: 3, fontFamily: C.F }}>{label}</div>
-    {sub && <div style={{ fontSize: 10, color: color, marginTop: 4, fontWeight: 600 }}>{sub}</div>}
-  </GCard>
-)
+
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          {/* AI Copilot */}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => { setShowCopilot(true); setShowNotifications(false); setShowProfile(false) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: showCopilot
+                ? `linear-gradient(135deg, rgba(168,85,247,0.25), rgba(94,106,210,0.25))`
+                : `linear-gradient(135deg, rgba(168,85,247,0.12), rgba(94,106,210,0.12))`,
+              border: `1px solid rgba(168,85,247,${showCopilot ? '0.4' : '0.2'})`,
+              borderRadius: 8, padding: '6px 12px',
+              color: '#c4b5fd', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              fontFamily: C.F,
+            }}
+          >
+            <Sparkles size={11} /> Ask Copilot
+          </motion.button>
+
+          {/* New Meeting */}
+          <MagneticBtn
+            onClick={onNew}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+              border: 'none', borderRadius: 8, padding: '6px 13px',
+              color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              fontFamily: C.F, boxShadow: `0 4px 12px ${C.accentGlow}`,
+            }}
+          >
+            <Plus size={11} /> New Meeting
+          </MagneticBtn>
+
+          {/* Notifications */}
+          <motion.button
+            whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+            onClick={() => { setShowNotifications(p => !p); setShowCopilot(false); setShowProfile(false) }}
+            style={{
+              position: 'relative', width: 32, height: 32, borderRadius: 8,
+              background: showNotifications ? C.accentGlow : C.surface,
+              border: `1px solid ${showNotifications ? C.accentLight + '40' : C.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: C.muted,
+            }}
+          >
+            <Bell size={13} />
+            {notifCount > 0 && (
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                style={{
+                  position: 'absolute', top: 5, right: 5,
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: liveCount > 0 ? C.red : C.accent,
+                  boxShadow: `0 0 6px ${liveCount > 0 ? C.red : C.accent}`,
+                  border: '1.5px solid #06060a',
+                }}
+              />
+            )}
+          </motion.button>
+
+          {/* Profile */}
+          <motion.button
+            whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+            onClick={() => { setShowProfile(p => !p); setShowCopilot(false); setShowNotifications(false) }}
+            style={{
+              width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+              background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 800, color: '#fff', cursor: 'pointer',
+              border: showProfile ? `2px solid ${C.accentLight}` : '2px solid transparent',
+              boxShadow: showProfile ? `0 0 12px ${C.accentGlow}` : `0 2px 8px ${C.accentGlow}`,
+              transition: 'border 0.2s, box-shadow 0.2s',
+            }}
+          >{user?.name?.[0]?.toUpperCase()}</motion.button>
+        </div>
+      </header>
+
+      {/* Modals */}
+      <CopilotModal show={showCopilot} onClose={() => setShowCopilot(false)} meetings={meetings} />
+      <NotificationsModal show={showNotifications} onClose={() => setShowNotifications(false)} meetings={meetings} />
+      <ProfileMenu show={showProfile} onClose={() => setShowProfile(false)} user={user} logout={logout} setActive={setActive} />
+    </>
+  )
+}
+
 
 // ── Overview Page ─────────────────────────────────────────────────────────────
 const OverviewPage = ({ meetings, loading, navigate, setShowNew, setShowJoin, user }: any) => {
@@ -1343,7 +1749,13 @@ export default function Dashboard() {
 
       {/* Main */}
       <div style={{ flex: 1, marginLeft: sidebarW, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1, transition: 'margin-left 0.3s cubic-bezier(0.16,1,0.3,1)' }}>
-        <TopNav user={user} onNew={() => setShowNew(true)} onJoin={() => setShowJoin(true)} />
+        <TopNav
+  user={currentUser}
+  onNew={() => setShowNew(true)}
+  meetings={meetings}
+  logout={logout}
+  setActive={setActive}
+/>
         <main style={{ flex: 1, overflowY: 'auto', padding: '22px 24px' }}>
           <AnimatePresence mode="wait">
             <motion.div
