@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
 
+import { API_URL } from "../config";
+
 const Login = () => {
   const navigate = useNavigate()
   const [isSignup, setIsSignup] = useState(false)
@@ -40,8 +42,8 @@ const Login = () => {
     setError('')
     try {
       const url = isSignup
-        ? '${API_URL}/api/auth/signup'
-        : '${API_URL}/api/auth/login'
+        ? `${API_URL}/api/auth/signup`
+        : `${API_URL}/api/auth/login`
       const body = isSignup
         ? { name: form.name, email: form.email, password: form.password }
         : { email: form.email, password: form.password }

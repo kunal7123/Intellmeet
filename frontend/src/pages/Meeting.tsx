@@ -8,6 +8,8 @@ import {
   Copy, Check, Hash, Hand, Smile, Wifi, X
 } from 'lucide-react'
 
+import { API_URL } from "../config";
+
 const F = '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
 const C = {
   bg: '#06060a',
@@ -357,7 +359,7 @@ export default function Meeting() {
       localStream = await startMedia()
       if (!localStream) return
 
-      const socket = io('${API_URL}')
+      const socket = io(`${API_URL}`)
       socketRef.current = socket
       socket.emit('join-room', roomId)
 
