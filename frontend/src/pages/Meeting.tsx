@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { io, Socket } from 'socket.io-client'
+
+import { API_URL } from "../config";
+
+
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mic, MicOff, Video, VideoOff, Monitor, MonitorOff,
@@ -8,7 +12,7 @@ import {
   Copy, Check, Hash, Hand, Smile, Wifi, X
 } from 'lucide-react'
 
-import { API_URL } from "../config";
+
 
 const F = '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
 const C = {
@@ -359,7 +363,7 @@ export default function Meeting() {
       localStream = await startMedia()
       if (!localStream) return
 
-      const socket = io(`${API_URL}`)
+     const socket = io(`${API_URL}`)
       socketRef.current = socket
       socket.emit('join-room', roomId)
 

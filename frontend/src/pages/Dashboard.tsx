@@ -1556,7 +1556,7 @@ const ProfilePage = ({ user, onUpdate }: any) => {
     setSaving(true)
     setError('')
     try {
-      const res = await axios.put('${API_URL}/api/auth/profile',
+      const res = await axios.put(`${API_URL}/api/auth/profile`,
         { name: form.name, email: form.email },
         { headers }
       )
@@ -1838,7 +1838,7 @@ const C = THEMES[themeName]
 
   const fetchMeetings = async () => {
     try {
-      const res = await axios.get('${API_URL}/api/meetings', { headers })
+      const res = await axios.get(`${API_URL}/api/meetings`, { headers })
       setMeetings(res.data.meetings)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -1867,7 +1867,7 @@ useEffect(() => {
   const createMeeting = async () => {
     if (!newTitle.trim()) return
     try {
-      const res = await axios.post('${API_URL}/api/meetings/create', { title: newTitle }, { headers })
+      const res = await axios.post(`${API_URL}/api/meetings/create`, { title: newTitle }, { headers })
       setShowNew(false); setNewTitle(''); fetchMeetings()
       navigate(`/meeting/${res.data.meeting.roomId}`)
     } catch (e) { console.error(e) }
