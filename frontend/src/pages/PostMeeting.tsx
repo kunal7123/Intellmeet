@@ -9,6 +9,9 @@ import {
   ChevronUp, Plus, X, Save
 } from 'lucide-react'
 
+import { API_URL } from "../config";
+
+
 const F = '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
 const C = {
   bg: '#06060a',
@@ -103,7 +106,7 @@ export default function PostMeeting() {
   // Fetch meeting data if ID provided
   useEffect(() => {
     if (!meetingId) return
-    axios.get(`http://localhost:5000/api/meetings/${meetingId}`, { headers })
+    axios.get(`${API_URL}/api/meetings/${meetingId}`, { headers })
       .then(res => {
         const m = res.data.meeting
         setMeeting(m)
@@ -147,7 +150,7 @@ export default function PostMeeting() {
     if (!meetingId) { setSaved(true); return }
     setSaving(true)
     try {
-      await axios.put(`http://localhost:5000/api/meetings/${meetingId}/summary`,
+      await axios.put(`${API_URL}/api/meetings/${meetingId}/summary`,
         { transcript, aiSummary, actionItems },
         { headers }
       )

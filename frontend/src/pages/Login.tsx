@@ -40,8 +40,8 @@ const Login = () => {
     setError('')
     try {
       const url = isSignup
-        ? 'http://localhost:5000/api/auth/signup'
-        : 'http://localhost:5000/api/auth/login'
+        ? '${API_URL}/api/auth/signup'
+        : '${API_URL}/api/auth/login'
       const body = isSignup
         ? { name: form.name, email: form.email, password: form.password }
         : { email: form.email, password: form.password }

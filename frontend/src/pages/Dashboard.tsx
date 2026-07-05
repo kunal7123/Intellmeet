@@ -12,7 +12,7 @@ import {
   Star, Activity, Target, Award, Hash, Send
 } from 'lucide-react';
 
-
+import { API_URL } from "../config";
 
 import { Edit, Save, Check } from 'lucide-react';
 
@@ -22,30 +22,127 @@ import {
   ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell
 } from 'recharts';
 
+
+
 // ── Utils ─────────────────────────────────────────────────────────────────────
 const cn = (...classes: (string | undefined | false | null)[]) =>
   classes.filter(Boolean).join(' ');
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
-const C = {
-  bg: '#06060a',
-  surface: 'rgba(255,255,255,0.032)',
-  surfaceHover: 'rgba(255,255,255,0.06)',
-  border: 'rgba(255,255,255,0.07)',
-  borderAccent: 'rgba(94,106,210,0.35)',
-  accent: '#5E6AD2',
-  accentLight: '#818cf8',
-  accentGlow: 'rgba(94,106,210,0.2)',
-  purple: '#a855f7',
-  purpleGlow: 'rgba(168,85,247,0.2)',
-  green: '#10b981',
-  red: '#ef4444',
-  amber: '#f59e0b',
-  text: '#f8fafc',
-  sub: '#94a3b8',
-  muted: 'rgba(255,255,255,0.28)',
-  F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+// ── Themes ────────────────────────────────────────────────────────────────────
+
+
+const THEMES: Record<string, any> = {
+  violet: {
+    bg: '#06060a',
+    surface: 'rgba(255,255,255,0.032)',
+    surfaceHover: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(94,106,210,0.35)',
+    accent: '#5E6AD2',
+    accentLight: '#818cf8',
+    accentGlow: 'rgba(94,106,210,0.2)',
+    purple: '#a855f7',
+    purpleGlow: 'rgba(168,85,247,0.2)',
+    green: '#10b981',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    text: '#f8fafc',
+    sub: '#94a3b8',
+    muted: 'rgba(255,255,255,0.28)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: 'Violet',
+    preview: ['#5E6AD2', '#a855f7'],
+  },
+  emerald: {
+    bg: '#030a06',
+    surface: 'rgba(255,255,255,0.032)',
+    surfaceHover: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(16,185,129,0.35)',
+    accent: '#10b981',
+    accentLight: '#34d399',
+    accentGlow: 'rgba(16,185,129,0.2)',
+    purple: '#06b6d4',
+    purpleGlow: 'rgba(6,182,212,0.2)',
+    green: '#10b981',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    text: '#f8fafc',
+    sub: '#94a3b8',
+    muted: 'rgba(255,255,255,0.28)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: 'Emerald',
+    preview: ['#10b981', '#06b6d4'],
+  },
+  rose: {
+    bg: '#0a0506',
+    surface: 'rgba(255,255,255,0.032)',
+    surfaceHover: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(244,63,94,0.35)',
+    accent: '#f43f5e',
+    accentLight: '#fb7185',
+    accentGlow: 'rgba(244,63,94,0.2)',
+    purple: '#e879f9',
+    purpleGlow: 'rgba(232,121,249,0.2)',
+    green: '#10b981',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    text: '#f8fafc',
+    sub: '#94a3b8',
+    muted: 'rgba(255,255,255,0.28)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: 'Rose',
+    preview: ['#f43f5e', '#e879f9'],
+  },
+  amber: {
+    bg: '#08060a',
+    surface: 'rgba(255,255,255,0.032)',
+    surfaceHover: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(245,158,11,0.35)',
+    accent: '#f59e0b',
+    accentLight: '#fbbf24',
+    accentGlow: 'rgba(245,158,11,0.2)',
+    purple: '#f97316',
+    purpleGlow: 'rgba(249,115,22,0.2)',
+    green: '#10b981',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    text: '#f8fafc',
+    sub: '#94a3b8',
+    muted: 'rgba(255,255,255,0.28)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: 'Amber',
+    preview: ['#f59e0b', '#f97316'],
+  },
+  slate: {
+    bg: '#080a0f',
+    surface: 'rgba(255,255,255,0.032)',
+    surfaceHover: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(99,102,241,0.35)',
+    accent: '#6366f1',
+    accentLight: '#818cf8',
+    accentGlow: 'rgba(99,102,241,0.2)',
+    purple: '#8b5cf6',
+    purpleGlow: 'rgba(139,92,246,0.2)',
+    green: '#10b981',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    text: '#f8fafc',
+    sub: '#94a3b8',
+    muted: 'rgba(255,255,255,0.28)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: 'Indigo',
+    preview: ['#6366f1', '#8b5cf6'],
+  },
 }
+
+
+
+
 
 // ── Animated counter ──────────────────────────────────────────────────────────
 const Counter = ({ value, duration = 1.2 }: { value: number; duration?: number }) => {
@@ -656,10 +753,11 @@ const ProfileMenu = ({ show, onClose, user, logout, setActive }: any) => {
 
 
 
-const TopNav = ({ user, onNew, meetings, logout, setActive }: any) => {
+const TopNav = ({ user, onNew, meetings, logout, setActive, themeName, setThemeName }: any) => {
   const [showCopilot, setShowCopilot] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [showTheme, setShowTheme] = useState(false)
 
   const liveCount = meetings.filter((m: any) => m.status === 'live').length
   const notifCount = meetings.length + 1
@@ -754,6 +852,83 @@ const TopNav = ({ user, onNew, meetings, logout, setActive }: any) => {
               />
             )}
           </motion.button>
+
+
+          {/* Theme Switcher */}
+<div style={{ position: 'relative' }}>
+  <motion.button
+    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+    onClick={() => { setShowTheme(p => !p); setShowCopilot(false); setShowNotifications(false); setShowProfile(false) }}
+    style={{
+      width: 32, height: 32, borderRadius: 8,
+      background: showTheme ? C.accentGlow : C.surface,
+      border: `1px solid ${showTheme ? C.accentLight + '40' : C.border}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: 'pointer',
+    }}
+  >
+    <div style={{ display: 'flex', gap: 2 }}>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: THEMES[themeName].preview[0] }} />
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: THEMES[themeName].preview[1] }} />
+    </div>
+  </motion.button>
+
+  {/* Theme Dropdown */}
+  <AnimatePresence>
+    {showTheme && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: -8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: -8 }}
+        style={{
+          position: 'absolute', top: '110%', right: 0,
+          background: '#0d0b14',
+          border: `1px solid ${C.border}`,
+          borderRadius: 14, padding: '10px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          zIndex: 300, minWidth: 160,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8, padding: '0 4px', fontFamily: C.F }}>
+          Theme
+        </div>
+        {Object.entries(THEMES).map(([key, theme]) => (
+          <motion.button
+            key={key}
+            whileHover={{ background: 'rgba(255,255,255,0.06)' }}
+            onClick={() => {
+              setThemeName(key)
+              localStorage.setItem('intellmeet-theme', key)
+              setShowTheme(false)
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              width: '100%', padding: '8px 8px', borderRadius: 9,
+              background: themeName === key ? C.accentGlow : 'transparent',
+              border: `1px solid ${themeName === key ? C.borderAccent : 'transparent'}`,
+              cursor: 'pointer', fontFamily: C.F,
+              transition: 'background 0.15s',
+            }}
+          >
+            <div style={{ display: 'flex', gap: 3 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.preview[0] }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.preview[1] }} />
+            </div>
+            <span style={{ fontSize: 12, color: themeName === key ? C.accentLight : C.sub, fontWeight: themeName === key ? 700 : 400 }}>
+              {theme.label}
+            </span>
+            {themeName === key && (
+              <Check size={11} color={C.accentLight} style={{ marginLeft: 'auto' }} />
+            )}
+          </motion.button>
+        ))}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+
+
 
           {/* Profile */}
           <motion.button
@@ -1381,7 +1556,7 @@ const ProfilePage = ({ user, onUpdate }: any) => {
     setSaving(true)
     setError('')
     try {
-      const res = await axios.put('http://localhost:5000/api/auth/profile',
+      const res = await axios.put('${API_URL}/api/auth/profile',
         { name: form.name, email: form.email },
         { headers }
       )
@@ -1630,6 +1805,8 @@ const Modal = ({ show, onClose, title, sub, children }: any) => (
 )
 
 // ── Main ──────────────────────────────────────────────────────────────────────
+let C = THEMES['violet']
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
@@ -1646,7 +1823,12 @@ export default function Dashboard() {
   JSON.parse(localStorage.getItem('user') || '{}')
 )
 
+const [themeName, setThemeName] = useState(() => {
+  return localStorage.getItem('intellmeet-theme') || 'violet'
+})
 
+
+const C = THEMES[themeName]
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
@@ -1656,18 +1838,36 @@ export default function Dashboard() {
 
   const fetchMeetings = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/meetings', { headers })
+      const res = await axios.get('${API_URL}/api/meetings', { headers })
       setMeetings(res.data.meetings)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
+
+
+  // ── Meeting Reminder ──────────────────────────────────────────────────────────
+const [reminder, setReminder] = useState<any>(null)
+
+useEffect(() => {
+  if (meetings.length === 0) return
+
+  // Scheduled meetings check karo
+  const scheduled = meetings.filter((m: any) => m.status === 'scheduled')
+  if (scheduled.length > 0) {
+    // 5 second baad reminder dikhao (real app mein time check hoga)
+    const t = setTimeout(() => {
+      setReminder(scheduled[0])
+    }, 5000)
+    return () => clearTimeout(t)
+  }
+}, [meetings])
 
   useEffect(() => { fetchMeetings() }, [])
 
   const createMeeting = async () => {
     if (!newTitle.trim()) return
     try {
-      const res = await axios.post('http://localhost:5000/api/meetings/create', { title: newTitle }, { headers })
+      const res = await axios.post('${API_URL}/api/meetings/create', { title: newTitle }, { headers })
       setShowNew(false); setNewTitle(''); fetchMeetings()
       navigate(`/meeting/${res.data.meeting.roomId}`)
     } catch (e) { console.error(e) }
@@ -1676,7 +1876,7 @@ export default function Dashboard() {
   const joinMeeting = async () => {
     if (!joinId.trim()) return
     try {
-      await axios.post(`http://localhost:5000/api/meetings/join/${joinId}`, {}, { headers })
+      await axios.post(`${API_URL}/api/meetings/join/${joinId}`, {}, { headers })
       setShowJoin(false); setJoinId('')
       navigate(`/meeting/${joinId}`)
     } catch { showToast('Room ID not found!') }
@@ -1744,18 +1944,109 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+        
+
+        {/* Meeting Reminder */}
+<AnimatePresence>
+  {reminder && (
+    <motion.div
+      initial={{ opacity: 0, x: 100, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 100, scale: 0.9 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      style={{
+        position: 'fixed', bottom: 24, right: 24,
+        width: 320, zIndex: 999,
+        background: '#0d0b14',
+        border: `1px solid ${C.borderAccent}`,
+        borderRadius: 16, overflow: 'hidden',
+        boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px ${C.accentGlow}`,
+        fontFamily: C.F,
+      }}
+    >
+      {/* Accent top bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${C.accent}, ${C.purple})` }} />
+
+      <div style={{ padding: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9,
+              background: C.accentGlow, border: `1px solid ${C.borderAccent}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Bell size={14} color={C.accentLight} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.text }}>Meeting Reminder</div>
+              <div style={{ fontSize: 9, color: C.muted }}>Scheduled meeting</div>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+            onClick={() => setReminder(null)}
+            style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer' }}
+          ><X size={13} /></motion.button>
+        </div>
+
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>
+          {reminder.title}
+        </div>
+        <div style={{ fontSize: 11, color: C.muted, marginBottom: 14 }}>
+          You have a scheduled meeting ready to join
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              navigate(`/meeting/${reminder.roomId}`)
+              setReminder(null)
+            }}
+            style={{
+              flex: 2, padding: '8px',
+              background: `linear-gradient(135deg, ${C.accent}, ${C.purple})`,
+              border: 'none', borderRadius: 9,
+              color: '#fff', fontSize: 11, fontWeight: 700,
+              cursor: 'pointer', fontFamily: C.F,
+              boxShadow: `0 4px 12px ${C.accentGlow}`,
+            }}
+          >Join Now →</motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setReminder(null)}
+            style={{
+              flex: 1, padding: '8px',
+              background: C.surface, border: `1px solid ${C.border}`,
+              borderRadius: 9, color: C.muted,
+              fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', fontFamily: C.F,
+            }}
+          >Dismiss</motion.button>
+        </div>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+
       {/* Sidebar */}
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={active} setActive={setActive} user={currentUser} logout={logout} meetings={meetings} />
 
       {/* Main */}
       <div style={{ flex: 1, marginLeft: sidebarW, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1, transition: 'margin-left 0.3s cubic-bezier(0.16,1,0.3,1)' }}>
-        <TopNav
+<TopNav
   user={currentUser}
   onNew={() => setShowNew(true)}
   meetings={meetings}
   logout={logout}
   setActive={setActive}
+  themeName={themeName}
+  setThemeName={setThemeName}
 />
+
+
         <main style={{ flex: 1, overflowY: 'auto', padding: '22px 24px' }}>
           <AnimatePresence mode="wait">
             <motion.div

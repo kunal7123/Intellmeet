@@ -26,6 +26,7 @@ const C = {
   muted: 'rgba(255,255,255,0.28)',
 }
 
+
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -356,7 +357,7 @@ export default function Meeting() {
       localStream = await startMedia()
       if (!localStream) return
 
-      const socket = io('http://localhost:5000')
+      const socket = io('${API_URL}')
       socketRef.current = socket
       socket.emit('join-room', roomId)
 
