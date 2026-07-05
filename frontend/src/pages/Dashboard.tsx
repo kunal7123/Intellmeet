@@ -53,6 +53,7 @@ const THEMES: Record<string, any> = {
     F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
     label: 'Violet',
     preview: ['#5E6AD2', '#a855f7'],
+    dark: true,
   },
   emerald: {
     bg: '#030a06',
@@ -74,6 +75,7 @@ const THEMES: Record<string, any> = {
     F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
     label: 'Emerald',
     preview: ['#10b981', '#06b6d4'],
+    dark: true,
   },
   rose: {
     bg: '#0a0506',
@@ -95,6 +97,7 @@ const THEMES: Record<string, any> = {
     F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
     label: 'Rose',
     preview: ['#f43f5e', '#e879f9'],
+    dark: true,
   },
   amber: {
     bg: '#08060a',
@@ -116,8 +119,9 @@ const THEMES: Record<string, any> = {
     F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
     label: 'Amber',
     preview: ['#f59e0b', '#f97316'],
+    dark: true,
   },
-  slate: {
+  indigo: {
     bg: '#080a0f',
     surface: 'rgba(255,255,255,0.032)',
     surfaceHover: 'rgba(255,255,255,0.06)',
@@ -137,6 +141,29 @@ const THEMES: Record<string, any> = {
     F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
     label: 'Indigo',
     preview: ['#6366f1', '#8b5cf6'],
+    dark: true,
+  },
+  light: {
+    bg: '#f8fafc',
+    surface: 'rgba(0,0,0,0.04)',
+    surfaceHover: 'rgba(0,0,0,0.07)',
+    border: 'rgba(0,0,0,0.08)',
+    borderAccent: 'rgba(94,106,210,0.3)',
+    accent: '#5E6AD2',
+    accentLight: '#4f46e5',
+    accentGlow: 'rgba(94,106,210,0.12)',
+    purple: '#7c3aed',
+    purpleGlow: 'rgba(124,58,237,0.12)',
+    green: '#059669',
+    red: '#dc2626',
+    amber: '#d97706',
+    text: '#0f172a',
+    sub: '#475569',
+    muted: 'rgba(0,0,0,0.4)',
+    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+    label: '☀️ Light',
+    preview: ['#5E6AD2', '#7c3aed'],
+    dark: false,
   },
 }
 
@@ -263,18 +290,20 @@ const Sidebar = ({ collapsed, setCollapsed, active, setActive, user, logout, mee
   const live = meetings.filter((m: any) => m.status === 'live').length
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 68 : 232 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      style={{
-        background: 'rgba(6,6,10,0.92)',
-        borderRight: `1px solid ${C.border}`,
-        height: '100vh', display: 'flex', flexDirection: 'column',
-        position: 'fixed', top: 0, left: 0, zIndex: 60,
-        backdropFilter: 'blur(40px)',
-        flexShrink: 0,
-      }}
-    >
+          <motion.aside
+            animate={{ width: collapsed ? 68 : 232 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            style={{
+              background: C.dark !== false
+                ? 'rgba(6,6,10,0.92)'
+                : 'rgba(248,250,252,0.95)',
+              borderRight: `1px solid ${C.border}`,
+              height: '100vh', display: 'flex', flexDirection: 'column',
+              position: 'fixed', top: 0, left: 0, zIndex: 60,
+              backdropFilter: 'blur(40px)',
+              flexShrink: 0,
+            }}
+          >
       {/* Logo */}
       <div style={{ padding: '14px 12px', borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 10, cursor: 'pointer' }}
@@ -764,13 +793,17 @@ const TopNav = ({ user, onNew, meetings, logout, setActive, themeName, setThemeN
 
   return (
     <>
-      <header style={{
-        height: 52, position: 'sticky', top: 0, zIndex: 40,
-        background: 'rgba(6,6,10,0.88)', backdropFilter: 'blur(32px)',
-        borderBottom: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 20px', gap: 16,
-      }}>
+          <header style={{
+            height: 52, position: 'sticky', top: 0, zIndex: 40,
+            background: C.dark !== false
+              ? 'rgba(6,6,10,0.88)'
+              : 'rgba(248,250,252,0.9)',
+            backdropFilter: 'blur(32px)',
+            borderBottom: `1px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 20px', gap: 16,
+            transition: 'background 0.4s ease',
+          }}>
         {/* Search */}
         <div style={{ position: 'relative', width: 300 }}>
           <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: C.muted }} />
@@ -900,6 +933,7 @@ const TopNav = ({ user, onNew, meetings, logout, setActive, themeName, setThemeN
             onClick={() => {
               setThemeName(key)
               localStorage.setItem('intellmeet-theme', key)
+              C = THEMES[key] // Turant update
               setShowTheme(false)
             }}
             style={{
@@ -989,15 +1023,18 @@ const OverviewPage = ({ meetings, loading, navigate, setShowNew, setShowJoin, us
     <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 40 }}>
 
       {/* Welcome Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        style={{
-          position: 'relative', overflow: 'hidden', borderRadius: 20,
-          border: `1px solid ${C.border}`,
-          background: 'linear-gradient(135deg, #09090f 0%, #0d0b14 50%, #080810 100%)',
-          padding: '28px 32px',
-        }}
-      >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              style={{
+                position: 'relative', overflow: 'hidden', borderRadius: 20,
+                border: `1px solid ${C.border}`,
+                background: C.dark !== false
+                  ? 'linear-gradient(135deg, #09090f 0%, #0d0b14 50%, #080810 100%)'
+                  : 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #faf5ff 100%)',
+                padding: '28px 32px',
+                transition: 'background 0.4s ease',
+              }}
+            >
         {/* BG effects */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', background: `radial-gradient(circle, ${C.accentGlow} 0%, transparent 70%)` }} />
@@ -1809,6 +1846,12 @@ let C = THEMES['violet']
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [themeName, setThemeName] = useState(() => {
+  return localStorage.getItem('intellmeet-theme') || 'violet'
+})
+
+  C = THEMES[themeName]
+
   const [collapsed, setCollapsed] = useState(false)
   const [active, setActive] = useState('dashboard')
   const [meetings, setMeetings] = useState<any[]>([])
@@ -1821,14 +1864,15 @@ export default function Dashboard() {
 
   const [currentUser, setCurrentUser] = useState(
   JSON.parse(localStorage.getItem('user') || '{}')
+  
 )
 
-const [themeName, setThemeName] = useState(() => {
-  return localStorage.getItem('intellmeet-theme') || 'violet'
-})
 
 
-const C = THEMES[themeName]
+
+
+
+
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
@@ -1846,6 +1890,8 @@ const C = THEMES[themeName]
 
 
   // ── Meeting Reminder ──────────────────────────────────────────────────────────
+
+
 const [reminder, setReminder] = useState<any>(null)
 
 useEffect(() => {
@@ -1914,15 +1960,16 @@ useEffect(() => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', fontFamily: C.F, color: C.text, overflow: 'hidden' }}>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
-        ::-webkit-scrollbar { width: 3px; height: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
-        input::placeholder { color: rgba(255,255,255,0.2); }
-        button { font-family: ${C.F}; }
-      `}</style>
+    <div style={{minHeight: '100vh',background: C.bg,display: 'flex', fontFamily: C.F,color: C.text, overflow: 'hidden',transition: 'background 0.4s ease, color 0.3s ease'}}>
+          <style>{`
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+            ::-webkit-scrollbar { width: 3px; height: 3px; }
+            ::-webkit-scrollbar-thumb { background: ${C.dark !== false ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.15)'}; border-radius: 2px; }
+            input::placeholder { color: ${C.muted}; }
+            button { font-family: ${C.F}; }
+            * { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }
+          `}</style>
 
       {/* Background */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
