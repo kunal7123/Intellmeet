@@ -143,28 +143,28 @@ const THEMES: Record<string, any> = {
     preview: ['#6366f1', '#8b5cf6'],
     dark: true,
   },
-  light: {
-    bg: '#f8fafc',
-    surface: 'rgba(0,0,0,0.04)',
-    surfaceHover: 'rgba(0,0,0,0.07)',
-    border: 'rgba(0,0,0,0.08)',
-    borderAccent: 'rgba(94,106,210,0.3)',
-    accent: '#5E6AD2',
-    accentLight: '#4f46e5',
-    accentGlow: 'rgba(94,106,210,0.12)',
-    purple: '#7c3aed',
-    purpleGlow: 'rgba(124,58,237,0.12)',
-    green: '#059669',
-    red: '#dc2626',
-    amber: '#d97706',
-    text: '#0f172a',
-    sub: '#475569',
-    muted: 'rgba(0,0,0,0.4)',
-    F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
-    label: '☀️ Light',
-    preview: ['#5E6AD2', '#7c3aed'],
-    dark: false,
-  },
+light: {
+  bg: '#f0f2f5',
+  surface: 'rgba(0,0,0,0.04)',
+  surfaceHover: 'rgba(0,0,0,0.07)',
+  border: 'rgba(0,0,0,0.08)',
+  borderAccent: 'rgba(94,106,210,0.25)',
+  accent: '#5E6AD2',
+  accentLight: '#4f46e5',
+  accentGlow: 'rgba(94,106,210,0.1)',
+  purple: '#7c3aed',
+  purpleGlow: 'rgba(124,58,237,0.1)',
+  green: '#059669',
+  red: '#dc2626',
+  amber: '#d97706',
+  text: '#1e293b',
+  sub: '#475569',
+  muted: 'rgba(0,0,0,0.35)',
+  F: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
+  label: '☀️ Light',
+  preview: ['#5E6AD2', '#7c3aed'],
+  dark: false,
+},
 }
 
 
@@ -1028,9 +1028,9 @@ const OverviewPage = ({ meetings, loading, navigate, setShowNew, setShowJoin, us
               style={{
                 position: 'relative', overflow: 'hidden', borderRadius: 20,
                 border: `1px solid ${C.border}`,
-                background: C.dark !== false
-                  ? 'linear-gradient(135deg, #09090f 0%, #0d0b14 50%, #080810 100%)'
-                  : 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #faf5ff 100%)',
+                  background: C.dark !== false
+                    ? 'linear-gradient(135deg, #09090f 0%, #0d0b14 50%, #080810 100%)'
+                    : `linear-gradient(135deg, #e8eaf6 0%, #ede7f6 50%, #f3e5f5 100%)`,
                 padding: '28px 32px',
                 transition: 'background 0.4s ease',
               }}
@@ -1971,16 +1971,37 @@ useEffect(() => {
             * { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }
           `}</style>
 
-      {/* Background */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', top: '10%', left: '30%', width: 600, height: 400, background: `radial-gradient(ellipse, ${C.accentGlow} 0%, transparent 70%)`, filter: 'blur(80px)' }} />
-        <div style={{ position: 'absolute', bottom: '10%', right: '20%', width: 400, height: 300, background: `radial-gradient(ellipse, ${C.purpleGlow} 0%, transparent 70%)`, filter: 'blur(60px)' }} />
-        {/* Stars */}
-        {[...Array(35)].map((_, i) => (
-          <div key={i} style={{ position: 'absolute', left: `${(i * 29) % 100}%`, top: `${(i * 19) % 100}%`, width: i % 6 === 0 ? 2 : 1.2, height: i % 6 === 0 ? 2 : 1.2, borderRadius: '50%', background: '#fff', opacity: 0.04 + (i % 4) * 0.04 }} />
-        ))}
-      </div>
-
+{/* Background */}
+<div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+  <div style={{
+    position: 'absolute', top: '10%', left: '30%',
+    width: 600, height: 400,
+    background: C.dark !== false
+      ? `radial-gradient(ellipse, ${C.accentGlow} 0%, transparent 70%)`
+      : `radial-gradient(ellipse, rgba(94,106,210,0.08) 0%, transparent 70%)`,
+    filter: 'blur(80px)',
+  }} />
+  <div style={{
+    position: 'absolute', bottom: '10%', right: '20%',
+    width: 400, height: 300,
+    background: C.dark !== false
+      ? `radial-gradient(ellipse, ${C.purpleGlow} 0%, transparent 70%)`
+      : `radial-gradient(ellipse, rgba(124,58,237,0.06) 0%, transparent 70%)`,
+    filter: 'blur(60px)',
+  }} />
+  {/* Stars — dark mode mein hi dikhein */}
+  {C.dark !== false && [...Array(35)].map((_, i) => (
+    <div key={i} style={{
+      position: 'absolute',
+      left: `${(i * 29) % 100}%`,
+      top: `${(i * 19) % 100}%`,
+      width: i % 6 === 0 ? 2 : 1.2,
+      height: i % 6 === 0 ? 2 : 1.2,
+      borderRadius: '50%', background: '#fff',
+      opacity: 0.04 + (i % 4) * 0.04,
+    }} />
+  ))}
+</div>
       {/* Toast */}
       <AnimatePresence>
         {toast && (
